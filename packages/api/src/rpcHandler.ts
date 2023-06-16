@@ -211,11 +211,12 @@ export class RpcHandler implements IRpcEndpoint {
 
         const latestBlock = await this.config.publicClient.getBlockNumber()
         const fullBlockRange = 20000n
+        const fromBlock = latestBlock - fullBlockRange > 0n ? latestBlock - fullBlockRange : 0n
 
         const filterResult = await this.config.publicClient.getLogs({
             address: this.config.entryPoint,
             event: userOperationEventAbiItem,
-            fromBlock: latestBlock - fullBlockRange,
+            fromBlock,
             toBlock: latestBlock,
             args: {
                 userOpHash: userOperationHash
@@ -277,11 +278,12 @@ export class RpcHandler implements IRpcEndpoint {
 
         const latestBlock = await this.config.publicClient.getBlockNumber()
         const fullBlockRange = 20000n
+        const fromBlock = latestBlock - fullBlockRange > 0n ? latestBlock - fullBlockRange : 0n
 
         const filterResult = await this.config.publicClient.getLogs({
             address: this.config.entryPoint,
             event: userOperationEventAbiItem,
-            fromBlock: latestBlock - fullBlockRange,
+            fromBlock,
             toBlock: latestBlock,
             args: {
                 userOpHash: userOperationHash
