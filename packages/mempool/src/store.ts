@@ -1,9 +1,12 @@
-import { HexData32, SubmittedUserOperation, UserOperationInfo } from "@alto/types"
-import { Logger, Metrics } from "@alto/utils"
+import { EntryPointAbi, HexData32, SubmittedUserOperation, UserOperation, UserOperationInfo } from "@alto/types"
+import { Logger, Metrics, getNonceKeyAndValue } from "@alto/utils"
+import { Address, PublicClient } from "viem"
 
 export class MemoryStore {
     // private monitoredTransactions: Map<HexData32, TransactionInfo> = new Map() // tx hash to info
     private outstandingUserOperations: UserOperationInfo[] = []
+    private avaiableOutstandingUserOperations: UserOperationInfo[] = []
+
     private processingUserOperations: UserOperationInfo[] = []
     private submittedUserOperations: SubmittedUserOperation[] = []
 
@@ -13,6 +16,10 @@ export class MemoryStore {
     constructor(logger: Logger, metrics: Metrics) {
         this.logger = logger
         this.metrics = metrics
+    }
+
+    outstandingIsEmpty(): boolean {
+        return this.outstandingUserOperations.length === 0
     }
 
     addOutstanding(op: UserOperationInfo) {
@@ -69,6 +76,21 @@ export class MemoryStore {
 
         this.outstandingUserOperations.splice(index, 1)
         this.logger.debug({ userOpHash, store: "outstanding" }, "removed user op from mempool")
+
+        const availableIndex = this.avaiableOutstandingUserOperations.findIndex(
+            (op) => op.userOperationHash === userOpHash
+        )
+        if (availableIndex === -1) {
+            this.logger.warn(
+                { userOpHash, store: "availableOutstanding" },
+                "tried to remove non-existent user op from mempool"
+            )
+            return
+        }
+
+        this.avaiableOutstandingUserOperations.splice(availableIndex, 1)
+        this.logger.debug({ userOpHash, store: "availableOutstanding" }, "removed user op from mempool")
+
         this.metrics.userOperationsInMempool.metric
             .labels({
                 status: "outstanding",
@@ -114,6 +136,14 @@ export class MemoryStore {
             .dec()
     }
 
+    dumbAvailableOutstanding(): UserOperationInfo[] {
+        this.logger.trace(
+            { store: "availableOutstanding", length: this.avaiableOutstandingUserOperations.length },
+            "dumping mempool"
+        )
+        return this.avaiableOutstandingUserOperations
+    }
+
     dumpOutstanding(): UserOperationInfo[] {
         this.logger.trace({ store: "outstanding", length: this.outstandingUserOperations.length }, "dumping mempool")
         return this.outstandingUserOperations
@@ -142,5 +172,73 @@ export class MemoryStore {
         } else {
             throw new Error("unreachable")
         }
+    }
+
+    async updateAvailableUserOperations(publicClient: PublicClient, entryPoint: Address) {
+        const outstandingOps = this.dumpOutstanding().slice()
+
+        function getSenderNonceKeyPair(op: UserOperation) {
+            const [nonceKey, _] = getNonceKeyAndValue(op)
+
+            return `${op.sender}_${nonceKey}`
+        }
+
+        function parseSenderNonceKeyPair(senderNonceKeyPair: string) {
+            const [rawSender, rawNonceKey] = senderNonceKeyPair.split("_")
+
+            const sender = rawSender as Address
+            const nonceKey = BigInt(rawNonceKey)
+
+            return { sender, nonceKey }
+        }
+
+        // get all unique senders and nonceKey pairs from outstanding, processing and submitted ops
+        const allSendersAndNonceKeysRaw = new Set([
+            ...outstandingOps.map((op) => getSenderNonceKeyPair(op.userOperation))
+        ])
+
+        const allSendersAndNonceKeys = [...allSendersAndNonceKeysRaw].map((senderNonceKeyPair) =>
+            parseSenderNonceKeyPair(senderNonceKeyPair)
+        )
+
+        const results = await publicClient.multicall({
+            contracts: allSendersAndNonceKeys.map((senderNonceKeyPair) => {
+                return {
+                    address: entryPoint,
+                    abi: EntryPointAbi,
+                    functionName: "getNonce",
+                    args: [senderNonceKeyPair.sender, senderNonceKeyPair.nonceKey]
+                }
+            })
+        })
+
+        const availableOutstandingOps: UserOperationInfo[] = []
+
+        for (let i = 0; i < allSendersAndNonceKeys.length; i++) {
+            const senderAndNonceKey = allSendersAndNonceKeys[i]
+            const sender = senderAndNonceKey.sender
+            const nonceKey = senderAndNonceKey.nonceKey
+            const result = results[i]
+
+            if (result.status === "success") {
+                const nonceValue = result.result
+
+                outstandingOps.map((op) => {
+                    const [outstandingOpNonceKey, outstandingOpNonceValue] = getNonceKeyAndValue(op.userOperation)
+
+                    if (
+                        op.userOperation.sender === sender &&
+                        outstandingOpNonceKey === nonceKey &&
+                        outstandingOpNonceValue === nonceValue
+                    ) {
+                        availableOutstandingOps.push(op)
+                    }
+                })
+            } else {
+                this.logger.error({ error: result.error }, "error fetching nonce")
+            }
+        }
+
+        this.avaiableOutstandingUserOperations = availableOutstandingOps
     }
 }

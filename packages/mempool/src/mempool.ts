@@ -82,6 +82,12 @@ export class MemoryMempool implements Mempool {
         this.publicClient = publicClient
         this.entryPointAddress = entryPointAddress
         this.store = new MemoryStore(logger, metrics)
+
+        setInterval(() => {
+            if (!this.store.outstandingIsEmpty()) {
+                this.store.updateAvailableUserOperations(this.publicClient, this.entryPointAddress)
+            }
+        }, 500)
     }
 
     replaceSubmitted(userOperation: UserOperationInfo, transactionInfo: TransactionInfo): void {
@@ -152,7 +158,7 @@ export class MemoryMempool implements Mempool {
     }
 
     process(maxGasLimit?: bigint, minOps?: number): UserOperation[] {
-        const outstandingUserOperations = this.store.dumpOutstanding().slice()
+        const outstandingUserOperations = this.store.dumbAvailableOutstanding().slice()
         if (maxGasLimit) {
             let opsTaken = 0
             let gasUsed = 0n

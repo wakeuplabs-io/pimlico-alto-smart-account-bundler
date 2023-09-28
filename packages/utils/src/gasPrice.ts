@@ -70,7 +70,7 @@ export async function getGasPrice(
 
     let gasPrice = await publicClient.getGasPrice()
 
-    if (chainId === chains.celo.id) {
+    if (chainId === chains.celo.id || chainId === chains.sepolia.id) {
         gasPrice = (gasPrice * 3n) / 2n
         return {
             maxFeePerGas: gasPrice,
