@@ -11,21 +11,10 @@ import {
 } from "@alto/types"
 import { ValidationResult } from "@alto/types"
 import { Logger, Metrics } from "@alto/utils"
-import {
-    PublicClient,
-    getContract,
-    encodeFunctionData,
-    decodeErrorResult,
-    Account,
-    Transport,
-    Chain,
-    ContractFunctionExecutionError,
-    BaseError
-} from "viem"
+import { PublicClient, getContract, encodeFunctionData, decodeErrorResult, Account, Transport, Chain } from "viem"
 import { hexDataSchema } from "@alto/types"
 import { z } from "zod"
 import { fromZodError } from "zod-validation-error"
-import * as sentry from "@sentry/node"
 export interface IValidator {
     getExecutionResult(userOperation: UserOperation, usingTenderly?: boolean): Promise<ExecutionResult>
     getValidationResult(userOperation: UserOperation, usingTenderly?: boolean): Promise<ValidationResult>
@@ -61,25 +50,12 @@ async function getSimulationResult(
     const entryPointErrorSchemaParsing = usingTenderly
         ? entryPointErrorsSchema.safeParse(errorResult)
         : entryPointExecutionErrorSchema.safeParse(errorResult)
-
     if (!entryPointErrorSchemaParsing.success) {
-        try {
-            const err = fromZodError(entryPointErrorSchemaParsing.error)
-            logger.error({ error: err.message }, "unexpected error during valiation")
-            logger.error(JSON.stringify(errorResult))
-            err.message = `User Operation simulation returned unexpected invalid response: ${err.message}`
-            throw err
-        } catch {
-            if (errorResult instanceof BaseError) {
-                const revertError = errorResult.walk((err) => err instanceof ContractFunctionExecutionError)
-                throw new RpcError(
-                    `UserOperation reverted during simulation with reason: ${(revertError?.cause as any)?.reason}`,
-                    ValidationErrors.SimulateValidation
-                )
-            }
-            sentry.captureException(errorResult)
-            throw new Error(`User Operation simulation returned unexpected invalid response: ${errorResult}`)
-        }
+        const err = fromZodError(entryPointErrorSchemaParsing.error)
+        logger.error({ error: err.message }, "unexpected error during valiation")
+        logger.error(JSON.stringify(errorResult))
+        err.message = `User Operation simulation returned unexpected invalid response: ${err.message}`
+        throw err
     }
 
     const errorData = entryPointErrorSchemaParsing.data

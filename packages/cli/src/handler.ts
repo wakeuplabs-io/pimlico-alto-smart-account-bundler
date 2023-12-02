@@ -1,12 +1,13 @@
-import { BasicExecutor, ExecutorManager, SenderManager } from "@alto/executor"
-import { MemoryMempool, Monitor } from "@alto/mempool"
 import { NonceQueuer, RpcHandler, Server, UnsafeValidator } from "@alto/rpc"
-import { Logger, createMetrics, initDebugLogger, initProductionLogger } from "@alto/utils"
-import { Registry } from "prom-client"
+import { IBundlerArgs, IBundlerArgsInput, bundlerArgsSchema } from "./config"
+import { BasicExecutor, ExecutorManager, SenderManager } from "@alto/executor"
+import { Logger, initDebugLogger, initProductionLogger } from "@alto/utils"
+import { createMetrics } from "@alto/utils"
 import { Chain, PublicClient, Transport, createPublicClient, createWalletClient, http } from "viem"
 import * as chains from "viem/chains"
 import { fromZodError } from "zod-validation-error"
-import { IBundlerArgs, IBundlerArgsInput, bundlerArgsSchema } from "./config"
+import { Registry } from "prom-client"
+import { MemoryMempool, Monitor } from "@alto/mempool"
 
 const parseArgs = (args: IBundlerArgsInput): IBundlerArgs => {
     // validate every arg, make typesafe so if i add a new arg i have to validate it
@@ -121,42 +122,6 @@ const customChains: Chain[] = [
             },
         },
         testnet: true,
-    },
-    {
-        id: 901,
-        name: "Lyra",
-        network: "lyra",
-        nativeCurrency: {
-            name: "ETH",
-            symbol: "ETH",
-            decimals: 18
-        },
-        rpcUrls: {
-            default: {
-                http: []
-            },
-            public: {
-                http: []
-            }
-        }
-    },
-    {
-        id: 22222,
-        name: "Nautilus",
-        network: "nautilus",
-        nativeCurrency: {
-            name: "ZBC",
-            symbol: "ZBC",
-            decimals: 18
-        },
-        rpcUrls: {
-            default: {
-                http: []
-            },
-            public: {
-                http: []
-            }
-        }
     }
 ]
 
@@ -250,9 +215,7 @@ export const bundlerHandler = async (args: IBundlerArgsInput): Promise<void> => 
         logger.child({ module: "executor" }),
         metrics,
         !parsedArgs.tenderlyEnabled,
-        parsedArgs.noEip1559Support,
-        parsedArgs.customGasLimitForEstimation,
-        parsedArgs.useUserOperationGasLimitsForSubmission
+        parsedArgs.noEip1559Support
     )
 
     new ExecutorManager(
@@ -281,8 +244,6 @@ export const bundlerHandler = async (args: IBundlerArgsInput): Promise<void> => 
         monitor,
         nonceQueuer,
         parsedArgs.tenderlyEnabled ?? false,
-        parsedArgs.minimumGasPricePercent,
-        parsedArgs.noEthCallOverrideSupport,
         logger.child({ module: "rpc" }),
         metrics
     )
