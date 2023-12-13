@@ -178,6 +178,7 @@ function getChain(chainId: number): Chain {
 
 export const bundlerHandler = async (args: IBundlerArgsInput): Promise<void> => {
     const parsedArgs = parseArgs(args)
+
     if (parsedArgs.signerPrivateKeysExtra !== undefined) {
         parsedArgs.signerPrivateKeys = [...parsedArgs.signerPrivateKeys, ...parsedArgs.signerPrivateKeysExtra]
     }
@@ -212,6 +213,8 @@ export const bundlerHandler = async (args: IBundlerArgsInput): Promise<void> => 
     } else {
         logger = initProductionLogger(parsedArgs.logLevel)
     }
+    logger.debug({customGasLimitForEstimation: parsedArgs.customGasLimitForEstimation}, "customGasLimitForEstimation")
+
     const validator = new UnsafeValidator(
         client,
         parsedArgs.entryPoint,
