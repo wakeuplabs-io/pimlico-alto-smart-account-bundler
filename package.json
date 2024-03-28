@@ -29,13 +29,13 @@
         "ts-node": "^10.9.2",
         "typescript": "^5.3.3"
     },
+    "bin": {
+        "alto": "./src/out/alto.js"
+    },
     "private": true,
     "engines": {
         "node": ">=18.0.0"
     },
-    "workspaces": [
-        "src/",
-        "test/e2e/*"
-    ],
+    "workspaces": ["src/", "test/e2e/*"],
     "packageManager": "pnpm@8.15.4+sha256.cea6d0bdf2de3a0549582da3983c70c92ffc577ff4410cbf190817ddc35137c2"
 }
