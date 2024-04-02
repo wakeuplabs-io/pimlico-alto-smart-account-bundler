@@ -8,12 +8,12 @@ export const bundlerOptions: CliCommandOptions<IBundlerArgsInput> = {
         type: "string",
         require: true
     },
-    entryPoints: {
+    entryPoint: {
         description: "EntryPoint contract addresses split by commas",
         type: "string",
         require: true
     },
-    pimlicoSimulationsAddress: {
+    entryPointSimulationsAddress: {
         description: "Address of the entry point simulations contract",
         type: "string",
         require: false
@@ -253,6 +253,12 @@ export const bundlerOptions: CliCommandOptions<IBundlerArgsInput> = {
         type: "boolean",
         require: false,
         default: false
+    },
+    entryPointVersion: {
+        description: "Version of the entry point",
+        type: "string",
+        require: false,
+        default: "0.6"
     },
     gasPriceTimeValidityInSeconds: {
         description: "Time in seconds that the gas price is valid for",

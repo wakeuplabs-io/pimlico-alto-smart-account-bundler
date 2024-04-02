@@ -4,8 +4,8 @@ import {
     CallEngineAbi,
     type HexData,
     type HexData32
-} from "@alto/types"
-import type { ApiVersion } from "@alto/types"
+} from "@entrypoint-0.6/types"
+import type { ApiVersion } from "@entrypoint-0.6/types"
 import { Semaphore } from "async-mutex"
 import {
     type Account,
@@ -181,10 +181,8 @@ export class SenderManager {
                 const callEngine = getContract({
                     abi: CallEngineAbi,
                     address: refillAddress,
-                    client: {
-                        public: publicClient,
-                        wallet: walletClient
-                    }
+                    publicClient,
+                    walletClient
                 })
                 const tx = await callEngine.write.execute([instructions], {
                     account: this.utilityAccount,

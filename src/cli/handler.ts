@@ -20,8 +20,9 @@ import {
     bundlerArgsSchema
 } from "./config"
 import { customTransport } from "./customTransport"
-import { setupServer } from "./setupServer"
+import { setupEntryPointPointSix } from "@entrypoint-0.6/cli"
 import { SenderManager } from "@alto/executor"
+import { setupEntryPointPointSeven } from "@entrypoint-0.7/cli"
 
 const parseArgs = (args: IBundlerArgsInput): IBundlerArgs => {
     // validate every arg, make type safe so if i add a new arg i have to validate it
@@ -36,15 +37,13 @@ const parseArgs = (args: IBundlerArgsInput): IBundlerArgs => {
 
 const preFlightChecks = async (
     publicClient: PublicClient<Transport, Chain>,
-    parsedArgs: IBundlerArgs
+    args: IBundlerArgs
 ): Promise<void> => {
-    for (const entrypoint of parsedArgs.entryPoints) {
-        const entryPointCode = await publicClient.getBytecode({
-            address: entrypoint
-        })
-        if (entryPointCode === "0x") {
-            throw new Error(`entry point ${entrypoint} does not exist`)
-        }
+    const entryPointCode = await publicClient.getBytecode({
+        address: args.entryPoint
+    })
+    if (entryPointCode === "0x") {
+        throw new Error(`entry point ${args.entryPoint} does not exist`)
     }
 }
 
@@ -88,6 +87,7 @@ export async function bundlerHandler(args: IBundlerArgsInput): Promise<void> {
     const chain: Chain = {
         id: chainId,
         name: args.networkName,
+        network: args.networkName,
         nativeCurrency: {
             name: "ETH",
             symbol: "ETH",
@@ -128,7 +128,8 @@ export async function bundlerHandler(args: IBundlerArgsInput): Promise<void> {
     const registry = new Registry()
     registry.setDefaultLabels({
         network: chain.name,
-        chainId
+        chainId,
+        entrypoint_version: parsedArgs.entryPointVersion
     })
     const metrics = createMetrics(registry)
 
@@ -161,15 +162,30 @@ export async function bundlerHandler(args: IBundlerArgsInput): Promise<void> {
         parsedArgs.maxSigners
     )
 
-    await setupServer({
-        client,
-        walletClient,
-        parsedArgs,
-        logger,
-        rootLogger,
-        registry,
-        metrics,
-        senderManager,
-        gasPriceManager
-    })
+    if (parsedArgs.entryPointVersion === "0.6") {
+        await setupEntryPointPointSix({
+            client,
+            walletClient,
+            parsedArgs,
+            logger,
+            rootLogger,
+            registry,
+            metrics,
+            senderManager,
+            gasPriceManager
+        })
+    }
+    if (parsedArgs.entryPointVersion === "0.7") {
+        await setupEntryPointPointSeven({
+            client,
+            walletClient,
+            parsedArgs,
+            logger,
+            rootLogger,
+            registry,
+            metrics,
+            senderManager,
+            gasPriceManager
+        })
+    }
 }

@@ -1,4 +1,4 @@
-import { EntryPointAbi, EntryPoint_bytecode } from "@alto/types"
+import { EntryPointAbi, EntryPoint_bytecode } from "@entrypoint-0.6/types"
 import {
     http,
     createPublicClient,
