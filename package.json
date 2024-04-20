@@ -6,10 +6,10 @@
     "author": "Pimlico",
     "license": "GPL-3.0-or-later",
     "bin": {
-        "alto": "./src/lib/cli/alto.js"
+        "alto": "./src/out/alto.js"
     },
     "scripts": {
-        "prepare": "pnpm run build",
+        "prepare": "pnpm -r run prepare",
         "clean": "rm -rf ./src/lib ./src/*.tsbuildinfo",
         "clean-modules": "rm -rf ./src/node_modules node_modules",
         "build": "pnpm -r run build",
@@ -37,9 +37,6 @@
     "engines": {
         "node": ">=18.0.0"
     },
-    "workspaces": [
-        "src/",
-        "test/e2e/*"
-    ],
+    "workspaces": ["src/", "test/e2e/*"],
     "packageManager": "pnpm@8.15.4+sha256.cea6d0bdf2de3a0549582da3983c70c92ffc577ff4410cbf190817ddc35137c2"
 }
