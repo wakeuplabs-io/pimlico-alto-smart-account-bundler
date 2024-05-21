@@ -177,14 +177,14 @@ export function packUserOpV06(op: UserOperationV06): `0x${string}` {
 }
 
 export function removeZeroBytesFromUserOp<T extends UserOperation>(
-    userOpearation: T
+    userOperation: T
 ): T extends UserOperationV06 ? UserOperationV06 : PackedUserOperation {
-    if (isVersion06(userOpearation)) {
+    if (isVersion06(userOperation)) {
         return {
-            sender: userOpearation.sender,
-            nonce: userOpearation.nonce,
-            initCode: userOpearation.initCode,
-            callData: userOpearation.callData,
+            sender: userOperation.sender,
+            nonce: userOperation.nonce,
+            initCode: userOperation.initCode,
+            callData: userOperation.callData,
             callGasLimit: BigInt(
                 "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
             ),
@@ -201,16 +201,16 @@ export function removeZeroBytesFromUserOp<T extends UserOperation>(
                 "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
             ),
             paymasterAndData: bytesToHex(
-                new Uint8Array(userOpearation.paymasterAndData.length).fill(255)
+                new Uint8Array(userOperation.paymasterAndData.length).fill(255)
             ),
             signature: bytesToHex(
-                new Uint8Array(userOpearation.signature.length).fill(255)
+                new Uint8Array(userOperation.signature.length).fill(255)
             )
         } as T extends UserOperationV06 ? UserOperationV06 : PackedUserOperation
     }
 
     const packedUserOperation: PackedUserOperation = toPackedUserOperation(
-        userOpearation as UserOperationV07
+        userOperation as UserOperationV07
     )
 
     return {
@@ -404,13 +404,6 @@ export function calcDefaultPreVerificationGas(
     } else {
         packed = toBytes(packUserOpV07(p as PackedUserOperation))
     }
-
-    console.log(
-        {
-            packed: packed
-        },
-        "bytes"
-    )
 
     const lengthInWord = (packed.length + 31) / 32
     const callDataCost = packed
