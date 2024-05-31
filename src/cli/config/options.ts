@@ -104,6 +104,33 @@ export const bundlerOptions: CliCommandOptions<IBundlerArgsInput> = {
         type: "string",
         require: false,
         default: "105,110,115"
+    },
+    "mempool-max-parallel-ops": {
+        description:
+            "Maximum amount of parallel user ops to keep in the meempool (same sender, different nonce keys)",
+        type: "number",
+        require: false,
+        default: 10
+    },
+    "mempool-max-queued-ops": {
+        description:
+            "Maximum amount of sequential user ops to keep in the mempool (same sender and nonce key, different nonce values)",
+        type: "number",
+        require: false,
+        default: 0
+    },
+    "enforce-unique-senders-per-bundle": {
+        description:
+            "Include user ops with the same sender in the single bundle",
+        type: "boolean",
+        require: false,
+        default: true
+    },
+    "max-gas-per-bundle": {
+        description: "Maximum amount of gas per bundle",
+        type: "string",
+        require: false,
+        default: "5000000"
     }
 }
 
@@ -162,6 +189,13 @@ export const compatibilityOptions: CliCommandOptions<ICompatibilityArgsInput> =
             type: "string",
             require: false,
             default: "v1"
+        },
+        "paymaster-gas-limit-multiplier": {
+            description:
+                "Amount to multiply the paymaster gas limits fetched from simulations",
+            type: "string",
+            require: true,
+            default: "110"
         }
     }
 

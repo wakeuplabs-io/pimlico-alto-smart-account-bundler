@@ -72,6 +72,7 @@ export class SafeValidator
         gasPriceManager: GasPriceManager,
         chainType: ChainType,
         entryPointSimulationsAddress?: Address,
+        fixedGasLimitForEstimation?: bigint,
         usingTenderly = false,
         balanceOverrideEnabled = false
     ) {
@@ -82,6 +83,7 @@ export class SafeValidator
             gasPriceManager,
             chainType,
             entryPointSimulationsAddress,
+            fixedGasLimitForEstimation,
             usingTenderly,
             balanceOverrideEnabled
         )
@@ -91,6 +93,7 @@ export class SafeValidator
     async validateUserOperation(
         shouldCheckPrefund: boolean,
         userOperation: UserOperation,
+        queuedUserOperations: UserOperation[],
         entryPoint: Address,
         referencedContracts?: ReferencedCodeHashes
     ): Promise<
@@ -102,6 +105,7 @@ export class SafeValidator
         try {
             const validationResult = await this.getValidationResult(
                 userOperation,
+                queuedUserOperations,
                 entryPoint,
                 referencedContracts
             )
@@ -191,6 +195,7 @@ export class SafeValidator
 
     async getValidationResultV07(
         userOperation: UserOperationV07,
+        queuedUserOperations: UserOperationV07[],
         entryPoint: Address,
         preCodeHashes?: ReferencedCodeHashes
     ): Promise<
@@ -200,7 +205,11 @@ export class SafeValidator
         }
     > {
         if (this.usingTenderly) {
-            return super.getValidationResultV07(userOperation, entryPoint)
+            return super.getValidationResultV07(
+                userOperation,
+                queuedUserOperations,
+                entryPoint
+            )
         }
 
         if (preCodeHashes && preCodeHashes.addresses.length > 0) {

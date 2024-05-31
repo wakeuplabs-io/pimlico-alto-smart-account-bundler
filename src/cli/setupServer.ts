@@ -79,6 +79,7 @@ const getValidator = ({
             gasPriceManager,
             parsedArgs["chain-type"],
             parsedArgs["entrypoint-simulation-contract"],
+            parsedArgs["fixed-gas-limit-for-estimation"],
             parsedArgs.tenderly,
             parsedArgs["balance-override"]
         )
@@ -93,6 +94,7 @@ const getValidator = ({
         gasPriceManager,
         parsedArgs["chain-type"],
         parsedArgs["entrypoint-simulation-contract"],
+        parsedArgs["fixed-gas-limit-for-estimation"],
         parsedArgs.tenderly,
         parsedArgs["balance-override"],
         parsedArgs["expiration-check"]
@@ -133,7 +135,10 @@ const getMempool = ({
                     parsedArgs["mempool-log-level"] || parsedArgs["log-level"]
             }
         ),
-        metrics
+        metrics,
+        parsedArgs["mempool-max-parallel-ops"],
+        parsedArgs["mempool-max-queued-ops"],
+        parsedArgs["enforce-unique-senders-per-bundle"]
     )
 }
 
@@ -241,6 +246,7 @@ const getExecutorManager = ({
         metrics,
         parsedArgs["bundle-mode"],
         parsedArgs["max-bundle-wait"],
+        parsedArgs["max-gas-per-bundle"],
         gasPriceManager
     )
 }
@@ -322,6 +328,7 @@ const getRpcHandler = ({
         gasPriceManager,
         parsedArgs["gas-price-multipliers"],
         parsedArgs["chain-type"],
+        parsedArgs["paymaster-gas-limit-multiplier"],
         parsedArgs["dangerous-skip-user-operation-validation"]
     )
 }
