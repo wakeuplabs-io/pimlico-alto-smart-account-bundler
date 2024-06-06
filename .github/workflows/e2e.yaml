@@ -1,12 +1,13 @@
 name: Run E2E Tests
 
 on:
+  workflow_call:
   push:
     branches:
-    - kinto-production
+    - main
   pull_request:
     branches:
-    - kinto-production
+    - main
 
 jobs:
   docker-e2e:
