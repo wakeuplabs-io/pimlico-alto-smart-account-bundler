@@ -48,7 +48,9 @@
     ],
     "exclude": [
         "./**/*.test.ts",
+        "index.mts",
         "./lib/*",
+        "./esm/*",
         "./node_modules/*",
         "../node_modules/**/*"
     ],

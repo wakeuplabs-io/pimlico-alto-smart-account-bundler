@@ -2,7 +2,7 @@
     "compilerOptions": {
         "outDir": "esm",
         "target": "esnext",
-        "module": "ESNext",
+        "module": "NodeNext",
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "strict": true,
@@ -15,7 +15,7 @@
         "skipLibCheck": true,
         "declaration": true,
         "declarationMap": true,
-        "moduleResolution": "node",
+        "moduleResolution": "NodeNext",
         "paths": {
             "@alto/cli": [
                 "./cli"
@@ -49,6 +49,7 @@
     "exclude": [
         "./**/*.test.ts",
         "./lib/*",
+        "./esm/*",
         "./node_modules/*"
     ],
     "tsc-alias": {

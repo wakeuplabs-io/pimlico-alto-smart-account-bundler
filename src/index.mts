@@ -1,7 +1,7 @@
 import { resolve } from "node:path"
 import { defineInstance } from "prool"
-import { execa } from "prool/exports/processes"
-import { toArgs } from "./utils"
+import { execa } from "prool/processes"
+import { toArgs } from "./utils/toArgs.js"
 
 export type AltoParameters = {
     /**
