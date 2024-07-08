@@ -177,7 +177,6 @@ export async function filterOpsAndEstimateGas(
                     // @ts-ignore - ep is set correctly for opsToSend, but typescript doesn't know that
                     [opsToSend, wallet.address],
                     {
-                        account: wallet,
                         nonce: nonce,
                         blockTag: blockTag,
                         ...(fixedEstimationGasLimit !== undefined && {
@@ -199,7 +198,6 @@ export async function filterOpsAndEstimateGas(
 
                 gasLimit = await publicClient.estimateGas({
                     to: bundleBulker,
-                    account: wallet,
                     data: createCompressedCalldata(opsToSend, perOpInflatorId),
                     ...(fixedEstimationGasLimit !== undefined && {
                         gas: fixedEstimationGasLimit
