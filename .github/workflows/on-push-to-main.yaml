@@ -1,4 +1,4 @@
-name: Main
+name: Release
 on:
   push:
     branches: [main]
@@ -41,8 +41,8 @@ jobs:
         uses: changesets/action@v1
         with:
           version: pnpm run changeset:version
-          commit: 'chore: version package'
-          title: 'chore: version package'
+          commit: "chore: version package"
+          title: "chore: version package"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,6 +61,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install
+
+      - name: Build
+        run: |
+          pnpm run build && pnpm run build:esm && jq '. + {type: "module"}' ./src/package.json > ./src/package.tmp.json && mv ./src/package.tmp.json ./src/package.json
 
       - name: Publish to NPM
         uses: changesets/action@v1

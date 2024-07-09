@@ -16,7 +16,7 @@ import {
     type StateOverrides,
     type UserOperationV07,
     PimlicoEntryPointSimulationsAbi,
-    ValidationResultV07
+    type ValidationResultV07
 } from "@alto/types"
 import { deepHexlify, toPackedUserOperation } from "@alto/utils"
 
@@ -246,6 +246,7 @@ async function callPimlicoEntryPointSimulations(
     entryPoint: Address,
     entryPointSimulationsCallData: Hex[],
     entryPointSimulationsAddress: Address,
+    blockTagSupport: boolean,
     stateOverride?: StateOverrides
 ) {
     const callData = encodeFunctionData({
@@ -261,9 +262,11 @@ async function callPimlicoEntryPointSimulations(
                 to: entryPointSimulationsAddress,
                 data: callData
             },
-            "latest",
+            blockTagSupport
+                ? "latest"
+                : toHex(await publicClient.getBlockNumber()),
             // @ts-ignore
-            stateOverride
+            ...(stateOverride ? [stateOverride] : [])
         ]
     })) as Hex
 
@@ -283,6 +286,7 @@ export async function simulateHandleOp(
     targetAddress: Address,
     targetCallData: Hex,
     entryPointSimulationsAddress: Address,
+    blockTagSupport: boolean,
     stateOverride: StateOverrides = {}
 ) {
     const finalParam = getStateOverrides({
@@ -314,6 +318,7 @@ export async function simulateHandleOp(
             entryPointSimulationsSimulateTargetCallData
         ],
         entryPointSimulationsAddress,
+        blockTagSupport,
         finalParam
     )
 
@@ -326,7 +331,7 @@ export async function simulateHandleOp(
     return getSimulateHandleOpResult(cause[0])
 }
 
-function getSimulateValidationResult(errorData: Hex): {
+export function getSimulateValidationResult(errorData: Hex): {
     status: "failed" | "validation"
     data: ValidationResultV07 | Hex | string
 } {
@@ -513,10 +518,13 @@ export async function simulateValidation(
     queuedUserOperations: UserOperationV07[],
     entryPoint: Address,
     publicClient: PublicClient,
-    entryPointSimulationsAddress: Address
+    entryPointSimulationsAddress: Address,
+    blockTagSupport: boolean
 ) {
     const userOperations = [...queuedUserOperations, userOperation]
-    const packedUserOperations = userOperations.map(uo => toPackedUserOperation(uo))
+    const packedUserOperations = userOperations.map((uo) =>
+        toPackedUserOperation(uo)
+    )
 
     const entryPointSimulationsCallData = encodeFunctionData({
         abi: EntryPointV07SimulationsAbi,
@@ -528,7 +536,8 @@ export async function simulateValidation(
         publicClient,
         entryPoint,
         [entryPointSimulationsCallData],
-        entryPointSimulationsAddress
+        entryPointSimulationsAddress,
+        blockTagSupport
     )
 
     return {

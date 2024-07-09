@@ -4,9 +4,10 @@ import {
     type HexData32,
     type UserOperation,
     type UserOperationV07,
-    type PackedUserOperation,
-    EntryPointV07Abi
+    EntryPointV07Abi,
+    type PackedUserOperation
 } from "@alto/types"
+// biome-ignore lint/style/noNamespaceImport: explicitly make it clear when sentry is used
 import * as sentry from "@sentry/node"
 import {
     type Address,
@@ -195,9 +196,14 @@ export const transactionIncluded = async (
     [userOperationHash: HexData32]: {
         accountDeployed: boolean
     }
+    blockTimeStamp: bigint
 }> => {
     try {
         const rcp = await publicClient.getTransactionReceipt({ hash: txHash })
+        const block = await publicClient.getBlock({
+            blockHash: rcp.blockHash
+        })
+        const blockTimeStamp = block.timestamp
 
         if (rcp.status === "success") {
             // find if any logs are UserOperationEvent or AccountDeployed
@@ -246,15 +252,20 @@ export const transactionIncluded = async (
                         log
                     ) => {
                         if (log) {
-                            result[log.userOperationHash] = {
-                                userOperationHash: log.userOperationHash,
+                            const {
+                                userOperationHash,
+                                accountDeployed,
+                                success
+                            } = log
+
+                            result[userOperationHash] = {
+                                userOperationHash,
                                 accountDeployed:
-                                    log.accountDeployed ||
-                                    result[log.userOperationHash]
-                                        ?.accountDeployed,
+                                    accountDeployed ||
+                                    result[userOperationHash]?.accountDeployed,
                                 success:
-                                    log.success ||
-                                    result[log.userOperationHash]?.success
+                                    success ||
+                                    result[userOperationHash]?.success
                             }
 
                             return result
@@ -272,19 +283,23 @@ export const transactionIncluded = async (
             if (success) {
                 return {
                     status: "included",
+                    blockTimeStamp,
                     ...r
                 }
             }
             return {
-                status: "reverted"
+                status: "reverted",
+                blockTimeStamp
             }
         }
         return {
-            status: "failed"
+            status: "failed",
+            blockTimeStamp
         }
     } catch (_e) {
         return {
-            status: "not_found"
+            status: "not_found",
+            blockTimeStamp: 0n
         }
     }
 }
