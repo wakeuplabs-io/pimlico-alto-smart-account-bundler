@@ -653,7 +653,7 @@ const getGasPrice = ({
 export type GasPriceManager = Awaited<ReturnType<typeof createGasPriceManager>>
 
 export async function createGasPriceManager(config: AltoConfig) {
-    const logger = config.logger.child(
+    const logger = config.getLogger(
         { module: "gas_price_manager" },
         {
             level: config.publicClientLogLevel || config.logLevel
