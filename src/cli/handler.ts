@@ -1,5 +1,5 @@
 import { SenderManager } from "@alto/executor"
-import { GasPriceManager } from "@alto/handlers"
+import { createGasPriceManager } from "@alto/handlers"
 import {
     createMetrics,
     initDebugLogger,
@@ -113,9 +113,7 @@ export async function bundlerHandler(args_: IOptionsInput): Promise<void> {
 
     const config = createConfig({ ...args, logger, publicClient, walletClient })
 
-    const gasPriceManager = new GasPriceManager(config)
-
-    await gasPriceManager.init()
+    const gasPriceManager = await createGasPriceManager(config)
 
     const registry = new Registry()
     registry.setDefaultLabels({
