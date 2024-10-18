@@ -186,6 +186,9 @@ export class ExecutorManager {
             const isBundleFailed = bundle.every(
                 (result) => result.status === "failure"
             )
+            const isBundleReplace = bundle.every(
+                (result) => result.status === "replace"
+            )
             if (isBundleSuccess) {
                 this.metrics.bundlesSubmitted
                     .labels({ status: "success" })
@@ -198,6 +201,13 @@ export class ExecutorManager {
             }
             if (isBundleFailed) {
                 this.metrics.bundlesSubmitted.labels({ status: "failed" }).inc()
+            }
+            if (isBundleReplace) {
+                this.metrics.bundlesSubmitted
+                    .labels({ status: "replace" })
+                    .inc()
+
+                await this.replaceTransaction("AA95")
             }
         }
 

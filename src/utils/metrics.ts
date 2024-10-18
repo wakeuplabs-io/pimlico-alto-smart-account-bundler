@@ -86,6 +86,13 @@ export function createMetrics(registry: Registry, register = true) {
         registers
     })
 
+    const bundlesReplaced = new Counter({
+        name: "alto_bundles_replaced_total",
+        help: "Number of user operation bundles replaced",
+        labelNames: ["status"] as const,
+        registers
+    })
+
     const bundlesSubmitted = new Counter({
         name: "alto_bundles_submitted_total",
         help: "Number of user operations bundles submitted on-chain",
@@ -148,6 +155,13 @@ export function createMetrics(registry: Registry, register = true) {
         registers
     })
 
+    const userOperationsReplaced = new Counter({
+        name: "alto_user_operations_replaced_total",
+        help: "Number of user operations replaced",
+        labelNames: [] as const,
+        registers
+    })
+
     const userOperationsResubmitted = new Counter({
         name: "alto_user_operations_resubmitted_total",
         help: "Number of user operations resubmitted",
@@ -193,6 +207,7 @@ export function createMetrics(registry: Registry, register = true) {
         userOperationsSubmitted,
         bundlesIncluded,
         bundlesSubmitted,
+        bundlesReplaced,
         userOperationsReceived,
         userOperationsValidationSuccess,
         userOperationsValidationFailure,
@@ -201,6 +216,7 @@ export function createMetrics(registry: Registry, register = true) {
         verificationGasLimitEstimationCount,
         replacedTransactions,
         userOperationsResubmitted,
+        userOperationsReplaced,
         utilityWalletBalance,
         executorWalletsBalances,
         executorWalletsMinBalance,

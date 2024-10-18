@@ -550,31 +550,6 @@ export class Executor {
 
                 break
             } catch (e: unknown) {
-                if (e instanceof BaseError) {
-                    if (isTransactionUnderpricedError(e)) {
-                        request.maxFeePerGas = scaleBigIntByPercent(
-                            request.maxFeePerGas,
-                            150
-                        )
-                        request.maxPriorityFeePerGas = scaleBigIntByPercent(
-                            request.maxPriorityFeePerGas,
-                            150
-                        )
-                        //this.markWalletProcessed(wallet)
-                        //return opsWithHashToBundle.map((owh) => {
-                        //    return {
-                        //        status: "resubmit",
-                        //        info: {
-                        //            entryPoint,
-                        //            userOpHash: owh.userOperationHash,
-                        //            userOperation: owh.mempoolUserOperation,
-                        //            reason: "replacement transaction underpriced"
-                        //        }
-                        //    }
-                        //})
-                    }
-                }
-
                 const error = e as SendTransactionErrorType
                 let isErrorHandled = false
 
@@ -823,6 +798,24 @@ export class Executor {
                         }
                     }
                 })
+            }
+
+            if (err instanceof BaseError) {
+                if (isTransactionUnderpricedError(err)) {
+                    this.logger.warn("Transaction underpriced, retrying")
+                    //this.markWalletProcessed(wallet)
+                    return opsWithHashToBundle.map((owh) => {
+                        return {
+                            status: "replace",
+                            info: {
+                                entryPoint,
+                                userOpHash: owh.userOperationHash,
+                                userOperation: owh.mempoolUserOperation,
+                                reason: "replacement transaction underpriced"
+                            }
+                        }
+                    })
+                }
             }
 
             sentry.captureException(err)
