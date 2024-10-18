@@ -1,6 +1,11 @@
 import type { Address, Chain, Hex } from "viem"
 import type { Account } from "viem/accounts"
-import type { CompressedUserOperation, HexData32, UserOperation } from "."
+import type {
+    CompressedUserOperation,
+    Experimental7702UserOperation,
+    HexData32,
+    UserOperation
+} from "."
 
 export interface ReferencedCodeHashes {
     // addresses accessed during this user operation
@@ -13,16 +18,31 @@ export interface ReferencedCodeHashes {
 export const deriveUserOperation = (
     op: MempoolUserOperation
 ): UserOperation => {
-    return isCompressedType(op)
-        ? (op as CompressedUserOperation).inflatedOp
-        : (op as UserOperation)
+    if (isCompressedType(op)) {
+        return (op as CompressedUserOperation).inflatedOp
+    }
+    if (isExperimental7702Type(op)) {
+        return (op as Experimental7702UserOperation).userOperation
+    }
+
+    // default case
+    return op as UserOperation
 }
 
 export const isCompressedType = (op: MempoolUserOperation): boolean => {
     return "compressedCalldata" in op
 }
 
-export type MempoolUserOperation = UserOperation | CompressedUserOperation
+export const isExperimental7702Type = (
+    op: MempoolUserOperation
+): op is Experimental7702UserOperation => {
+    return "authorization" in op
+}
+
+export type MempoolUserOperation =
+    | UserOperation
+    | CompressedUserOperation
+    | Experimental7702UserOperation
 
 export type TransactionInfo = {
     transactionType: "default" | "compressed"

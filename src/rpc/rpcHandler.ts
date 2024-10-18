@@ -81,6 +81,7 @@ import {
 import { base, baseSepolia, optimism } from "viem/chains"
 import type { NonceQueuer } from "./nonceQueuer"
 import type { AltoConfig } from "../createConfig"
+import { SignedAuthorization } from "viem/experimental"
 
 export interface IRpcEndpoint {
     handleMethod(
@@ -293,6 +294,14 @@ export class RpcHandler implements IRpcEndpoint {
                 return {
                     method,
                     result: await this.pimlico_sendUserOperationNow(
+                        apiVersion,
+                        ...request.params
+                    )
+                }
+            case "pimlico_sendExperimental":
+                return {
+                    method,
+                    result: await this.pimlico_sendExperimental(
                         apiVersion,
                         ...request.params
                     )
@@ -1035,6 +1044,33 @@ export class RpcHandler implements IRpcEndpoint {
         const userOperationReceipt = parseUserOperationReceipt(opHash, receipt)
 
         return userOperationReceipt
+    }
+
+    async pimlico_sendExperimental(
+        apiVersion: ApiVersion,
+        userOperation: UserOperation,
+        entryPoint: Address,
+        authorization: SignedAuthorization
+    ) {
+        try {
+            this.logger.info("trying addToMempoolIfValid")
+            await this.addToMempoolIfValid(
+                {
+                    userOperation,
+                    authorization
+                },
+                entryPoint,
+                apiVersion
+            )
+        } catch (e) {
+            this.logger.error(e)
+        }
+
+        return getUserOperationHash(
+            userOperation,
+            entryPoint,
+            this.config.publicClient.chain.id
+        )
     }
 
     async pimlico_sendCompressedUserOperation(

@@ -41,6 +41,7 @@ import {
     hexToBytes,
     numberToHex
 } from "viem"
+import { SignedAuthorizationList } from "viem/experimental"
 
 export function simulatedOpsToResults(
     simulatedOps: {
@@ -132,7 +133,8 @@ export async function filterOpsAndEstimateGas(
     onlyPre1559: boolean,
     fixedGasLimitForEstimation: bigint | undefined,
     reputationManager: InterfaceReputationManager,
-    logger: Logger
+    logger: Logger,
+    authorizationList?: SignedAuthorizationList
 ) {
     const simulatedOps: {
         owh: UserOperationWithHash
@@ -162,19 +164,31 @@ export async function filterOpsAndEstimateGas(
 
                 const opsToSend = simulatedOps
                     .filter((op) => op.reason === undefined)
-                    .map((op) => {
+                    .map(({ owh }) => {
+                        const op = deriveUserOperation(owh.mempoolUserOperation)
                         return isUserOpV06
-                            ? op.owh.mempoolUserOperation
-                            : toPackedUserOperation(
-                                  op.owh
-                                      .mempoolUserOperation as UserOperationV07
-                              )
+                            ? op
+                            : toPackedUserOperation(op as UserOperationV07)
                     })
+
+                logger.info("calling eth_estimateGas", {
+                    args: {
+                        authorizationList,
+                        account: wallet,
+                        nonce: nonce,
+                        blockTag: blockTag,
+                        ...(fixedEstimationGasLimit !== undefined && {
+                            gas: fixedEstimationGasLimit
+                        }),
+                        ...gasOptions
+                    }
+                })
 
                 gasLimit = await ep.estimateGas.handleOps(
                     // @ts-ignore - ep is set correctly for opsToSend, but typescript doesn't know that
                     [opsToSend, wallet.address],
                     {
+                        authorizationList,
                         account: wallet,
                         nonce: nonce,
                         blockTag: blockTag,
@@ -210,6 +224,7 @@ export async function filterOpsAndEstimateGas(
 
             return { simulatedOps, gasLimit }
         } catch (err: unknown) {
+            logger.error({ err }, "error estimating gas!!")
             logger.error({ err, blockTag }, "error estimating gas")
             const e = parseViemError(err)
 
@@ -375,7 +390,7 @@ export async function filterOpsAndEstimateGas(
             } else {
                 sentry.captureException(err)
                 logger.error(
-                    { error: JSON.stringify(err), blockTag },
+                    { error: JSON.stringify(e), blockTag },
                     "error estimating gas"
                 )
                 return { simulatedOps: [], gasLimit: 0n }

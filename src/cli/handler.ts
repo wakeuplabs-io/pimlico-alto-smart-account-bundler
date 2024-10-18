@@ -19,6 +19,7 @@ import { setupServer } from "./setupServer"
 import { type AltoConfig, createConfig } from "../createConfig"
 import { parseArgs } from "./parseArgs"
 import { deploySimulationsContract } from "./deploySimulationsContract"
+import { eip7702Actions } from "viem/experimental"
 
 const preFlightChecks = async (config: AltoConfig): Promise<void> => {
     for (const entrypoint of config.entrypoints) {
@@ -101,7 +102,7 @@ export async function bundlerHandler(args_: IOptionsInput): Promise<void> {
             )
         }),
         chain
-    })
+    }).extend(eip7702Actions())
 
     // if flag is set, use utility wallet to deploy the simulations contract
     if (args.deploySimulationsContract) {
