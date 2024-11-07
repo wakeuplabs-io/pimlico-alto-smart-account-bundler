@@ -331,7 +331,8 @@ export const rpcOptions: CliCommandOptions<IRpcArgsInput> = {
     "max-block-range": {
         description: "Max block range for getLogs calls",
         type: "number",
-        require: false
+        require: false,
+        default: 1000
     },
     "block-tag-support": {
         description:
